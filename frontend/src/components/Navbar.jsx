@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Heart, LogOut } from 'lucide-react';
+import { Heart, LogOut, MessageSquare } from 'lucide-react';
 
 export default function Navbar() {
   const { user, isAuthenticated, isPatient, isDoctor, isAdmin, logout } = useAuth();
@@ -31,6 +31,10 @@ export default function Navbar() {
             <>
               <Link to="/book" className={isActive('/book')}>Book Appointment</Link>
               <Link to="/my-appointments" className={isActive('/my-appointments')}>My Appointments</Link>
+              <Link to="/medical-history" className={isActive('/medical-history')}>Medical History</Link>
+              <Link to="/messages" className={isActive('/messages')}>
+                <MessageSquare size={14} style={{ marginRight: 4 }} />Messages
+              </Link>
             </>
           )}
 
@@ -38,6 +42,10 @@ export default function Navbar() {
             <>
               <Link to="/doctor/schedule" className={isActive('/doctor/schedule')}>My Schedule</Link>
               <Link to="/doctor/appointments" className={isActive('/doctor/appointments')}>Appointments</Link>
+              <Link to="/doctor/patient-history" className={isActive('/doctor/patient-history')}>Patient History</Link>
+              <Link to="/messages" className={isActive('/messages')}>
+                <MessageSquare size={14} style={{ marginRight: 4 }} />Messages
+              </Link>
             </>
           )}
 

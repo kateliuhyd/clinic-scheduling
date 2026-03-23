@@ -14,6 +14,9 @@ import MyAppointmentsPage from './pages/MyAppointmentsPage';
 import DoctorSchedulePage from './pages/DoctorSchedulePage';
 import DoctorAppointmentsPage from './pages/DoctorAppointmentsPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import MedicalHistoryPage from './pages/MedicalHistoryPage';
+import PatientHistoryPage from './pages/PatientHistoryPage';
+import MessagesPage from './pages/MessagesPage';
 
 function AppContent() {
   const location = useLocation();
@@ -45,6 +48,11 @@ function AppContent() {
               <MyAppointmentsPage />
             </ProtectedRoute>
           } />
+          <Route path="/medical-history" element={
+            <ProtectedRoute roles={['PATIENT']}>
+              <MedicalHistoryPage />
+            </ProtectedRoute>
+          } />
           <Route path="/doctor/schedule" element={
             <ProtectedRoute roles={['DOCTOR']}>
               <DoctorSchedulePage />
@@ -53,6 +61,16 @@ function AppContent() {
           <Route path="/doctor/appointments" element={
             <ProtectedRoute roles={['DOCTOR']}>
               <DoctorAppointmentsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/doctor/patient-history" element={
+            <ProtectedRoute roles={['DOCTOR']}>
+              <PatientHistoryPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/messages" element={
+            <ProtectedRoute roles={['PATIENT', 'DOCTOR']}>
+              <MessagesPage />
             </ProtectedRoute>
           } />
           <Route path="/admin" element={
