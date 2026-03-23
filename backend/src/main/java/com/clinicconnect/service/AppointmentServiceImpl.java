@@ -76,6 +76,11 @@ public class AppointmentServiceImpl implements AppointmentService {
                     "This time slot is no longer available. It may have been booked by another patient.");
         }
 
+        // Step 2.5: Reject past-date slots
+        if (slot.getStartTime().isBefore(java.time.LocalDateTime.now())) {
+            throw new BadRequestException("Cannot book a time slot that is in the past.");
+        }
+
         // Step 3: Validate service exists
         serviceRepository.findById(request.getServiceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Service not found: " + request.getServiceId()));

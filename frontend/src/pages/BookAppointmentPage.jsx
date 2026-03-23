@@ -93,8 +93,11 @@ export default function BookAppointmentPage() {
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   };
 
-  // Group slots by date
-  const groupedSlots = slots.reduce((acc, slot) => {
+  // Filter out past slots and group by date
+  const now = new Date();
+  const futureSlots = slots.filter(slot => new Date(slot.startTime) > now);
+
+  const groupedSlots = futureSlots.reduce((acc, slot) => {
     const date = new Date(slot.startTime).toLocaleDateString('en-US', {
       weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
     });
@@ -155,8 +158,8 @@ export default function BookAppointmentPage() {
             <div className="form-group">
               <label className="form-label">Doctor</label>
               <select className="form-select" value={selectedDoctor}
-                      onChange={e => setSelectedDoctor(e.target.value)}
-                      style={{ minWidth: 220 }}>
+                onChange={e => setSelectedDoctor(e.target.value)}
+                style={{ minWidth: 220 }}>
                 <option value="">All Doctors</option>
                 {doctors.map(d => (
                   <option key={d.doctorId} value={d.doctorId}>
@@ -168,12 +171,14 @@ export default function BookAppointmentPage() {
             <div className="form-group">
               <label className="form-label">From</label>
               <input className="form-input" type="date" value={startDate}
-                     onChange={e => setStartDate(e.target.value)} />
+                min={new Date().toISOString().split('T')[0]}
+                onChange={e => setStartDate(e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">To</label>
               <input className="form-input" type="date" value={endDate}
-                     onChange={e => setEndDate(e.target.value)} />
+                min={new Date().toISOString().split('T')[0]}
+                onChange={e => setEndDate(e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">&nbsp;</label>
@@ -189,7 +194,7 @@ export default function BookAppointmentPage() {
         <div className="card">
           <div className="card-header">
             <h3>Available Time Slots</h3>
-            <span style={{ fontSize: 14, color: 'var(--gray-500)' }}>{slots.length} available</span>
+            <span style={{ fontSize: 14, color: 'var(--gray-500)' }}>{futureSlots.length} available</span>
           </div>
           <div className="card-body">
             {loading ? (
@@ -256,7 +261,7 @@ export default function BookAppointmentPage() {
                 <div className="form-group">
                   <label className="form-label">Service</label>
                   <select className="form-select" value={selectedService}
-                          onChange={e => setSelectedService(e.target.value)} required>
+                    onChange={e => setSelectedService(e.target.value)} required>
                     <option value="">Select a service</option>
                     {services.map(s => (
                       <option key={s.serviceId} value={s.serviceId}>
@@ -269,11 +274,11 @@ export default function BookAppointmentPage() {
                 <div className="form-group">
                   <label className="form-label">Notes (optional)</label>
                   <textarea className="form-textarea" placeholder="Any special requests or symptoms..."
-                            value={notes} onChange={e => setNotes(e.target.value)} />
+                    value={notes} onChange={e => setNotes(e.target.value)} />
                 </div>
 
                 <button className="btn btn-primary btn-block btn-lg" onClick={handleBook}
-                        disabled={booking || !selectedService}>
+                  disabled={booking || !selectedService}>
                   {booking ? 'Booking...' : 'Confirm Booking'}
                 </button>
               </>
