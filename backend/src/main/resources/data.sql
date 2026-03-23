@@ -4,24 +4,24 @@
 
 -- Default admin account (password: admin123)
 INSERT IGNORE INTO users (user_id, username, email, password_hash, first_name, last_name, phone, role)
-VALUES (1, 'admin', 'admin@clinicconnect.com', '$2a$10$SkmvmJc9Hx0aQdpUE4crjeGwA/EWSPje.7PCRZ2t.m0YModjGY.2y', 'System', 'Admin', '408-000-0001', 'ADMIN');
+VALUES (1, 'admin', 'admin@clinicconnect.com', '$2a$10$eHztNgjZVocdZ58cuqMQ/esJ2jkpXAFzgzmV23TfPdRg00LemWF9C', 'System', 'Admin', '408-000-0001', 'ADMIN');
 
 -- Sample doctors (password: doctor123)
 INSERT IGNORE INTO users (user_id, username, email, password_hash, first_name, last_name, phone, role)
-VALUES (2, 'dr.smith', 'smith@clinicconnect.com', '$2a$10$SkmvmJc9Hx0aQdpUE4crjeGwA/EWSPje.7PCRZ2t.m0YModjGY.2y', 'John', 'Smith', '408-000-0002', 'DOCTOR');
+VALUES (2, 'dr.smith', 'smith@clinicconnect.com', '$2a$10$CDN6K4tBclcHRYd9Swur7.WArE8S9MnujmOka9X/67GDniM3CjCwC', 'John', 'Smith', '408-000-0002', 'DOCTOR');
 
 INSERT IGNORE INTO users (user_id, username, email, password_hash, first_name, last_name, phone, role)
-VALUES (3, 'dr.johnson', 'johnson@clinicconnect.com', '$2a$10$SkmvmJc9Hx0aQdpUE4crjeGwA/EWSPje.7PCRZ2t.m0YModjGY.2y', 'Sarah', 'Johnson', '408-000-0003', 'DOCTOR');
+VALUES (3, 'dr.johnson', 'johnson@clinicconnect.com', '$2a$10$CDN6K4tBclcHRYd9Swur7.WArE8S9MnujmOka9X/67GDniM3CjCwC', 'Sarah', 'Johnson', '408-000-0003', 'DOCTOR');
 
 INSERT IGNORE INTO users (user_id, username, email, password_hash, first_name, last_name, phone, role)
-VALUES (4, 'dr.chen', 'chen@clinicconnect.com', '$2a$10$SkmvmJc9Hx0aQdpUE4crjeGwA/EWSPje.7PCRZ2t.m0YModjGY.2y', 'Michael', 'Chen', '408-000-0004', 'DOCTOR');
+VALUES (4, 'dr.chen', 'chen@clinicconnect.com', '$2a$10$CDN6K4tBclcHRYd9Swur7.WArE8S9MnujmOka9X/67GDniM3CjCwC', 'Michael', 'Chen', '408-000-0004', 'DOCTOR');
 
 -- Sample patients (password: patient123)
 INSERT IGNORE INTO users (user_id, username, email, password_hash, first_name, last_name, phone, role)
-VALUES (5, 'patient1', 'patient1@email.com', '$2a$10$SkmvmJc9Hx0aQdpUE4crjeGwA/EWSPje.7PCRZ2t.m0YModjGY.2y', 'Alice', 'Williams', '408-000-0005', 'PATIENT');
+VALUES (5, 'patient1', 'patient1@email.com', '$2a$10$j2J5Z/4KxGj/08irSY0.1e3L3b0W83pEelldjqfAQn1sXirVmmvR2', 'Alice', 'Williams', '408-000-0005', 'PATIENT');
 
 INSERT IGNORE INTO users (user_id, username, email, password_hash, first_name, last_name, phone, role)
-VALUES (6, 'patient2', 'patient2@email.com', '$2a$10$SkmvmJc9Hx0aQdpUE4crjeGwA/EWSPje.7PCRZ2t.m0YModjGY.2y', 'Bob', 'Brown', '408-000-0006', 'PATIENT');
+VALUES (6, 'patient2', 'patient2@email.com', '$2a$10$j2J5Z/4KxGj/08irSY0.1e3L3b0W83pEelldjqfAQn1sXirVmmvR2', 'Bob', 'Brown', '408-000-0006', 'PATIENT');
 
 -- Departments
 INSERT IGNORE INTO departments (department_id, name, description)

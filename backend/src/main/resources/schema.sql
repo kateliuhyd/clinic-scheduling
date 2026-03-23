@@ -162,3 +162,56 @@ CREATE TABLE IF NOT EXISTS notifications_log (
         FOREIGN KEY (recipient_id) REFERENCES users(user_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- -------------------------------------------
+-- Table: medical_records
+-- Purpose: Medical records linked to completed appointments
+-- -------------------------------------------
+CREATE TABLE IF NOT EXISTS medical_records (
+    record_id       BIGINT       AUTO_INCREMENT PRIMARY KEY,
+    appointment_id  BIGINT       NOT NULL UNIQUE,
+    patient_id      BIGINT       NOT NULL,
+    doctor_id       BIGINT       NOT NULL,
+    diagnosis       TEXT,
+    treatment       TEXT,
+    notes           TEXT,
+    created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_record_appointment
+        FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_record_patient
+        FOREIGN KEY (patient_id) REFERENCES users(user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_record_doctor
+        FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    INDEX idx_records_patient (patient_id),
+    INDEX idx_records_doctor (doctor_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- -------------------------------------------
+-- Table: messages
+-- Purpose: Direct messages between patients and doctors
+-- -------------------------------------------
+CREATE TABLE IF NOT EXISTS messages (
+    message_id   BIGINT    AUTO_INCREMENT PRIMARY KEY,
+    sender_id    BIGINT    NOT NULL,
+    receiver_id  BIGINT    NOT NULL,
+    content      TEXT      NOT NULL,
+    is_read      BOOLEAN   NOT NULL DEFAULT FALSE,
+    created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_msg_sender
+        FOREIGN KEY (sender_id) REFERENCES users(user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_msg_receiver
+        FOREIGN KEY (receiver_id) REFERENCES users(user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    INDEX idx_messages_sender (sender_id),
+    INDEX idx_messages_receiver (receiver_id),
+    INDEX idx_messages_conversation (sender_id, receiver_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

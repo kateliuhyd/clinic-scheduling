@@ -87,4 +87,18 @@ export const adminAPI = {
   getDashboard: () => api.get('/admin/dashboard'),
 };
 
+// Medical Records
+export const medicalRecordAPI = {
+  getMy: () => api.get('/medical-records/my'),
+  getByPatient: (patientId) => api.get(`/medical-records/patient/${patientId}`),
+  create: (data) => api.post('/medical-records', data),
+};
+
+// Messages
+export const messageAPI = {
+  getConversations: () => api.get('/messages/conversations'),
+  getConversation: (partnerId) => api.get(`/messages/conversation/${partnerId}`),
+  send: (data) => api.post('/messages', data),
+};
+
 export default api;
