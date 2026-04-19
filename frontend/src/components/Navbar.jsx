@@ -25,7 +25,7 @@ export default function Navbar() {
 
         <div className="navbar-nav">
           <Link to="/" className={isActive('/')}>Home</Link>
-          <Link to="/doctors" className={isActive('/doctors')}>Find a Doctor</Link>
+          {!isDoctor && <Link to="/doctors" className={isActive('/doctors')}>Find a Doctor</Link>}
 
           {isAuthenticated && isPatient && (
             <>

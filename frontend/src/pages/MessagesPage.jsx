@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { messageAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { MessageSquare, Send, User } from 'lucide-react';
@@ -14,10 +15,12 @@ export default function MessagesPage() {
     const [newConvoId, setNewConvoId] = useState('');
     const [showNewConvo, setShowNewConvo] = useState(false);
     const messagesEndRef = useRef(null);
+    const [searchParams] = useSearchParams();
+    const queryUserId = searchParams.get('userId');
 
     useEffect(() => {
-        loadConversations();
-    }, []);
+        loadConversations(queryUserId);
+    }, [queryUserId]);
 
     useEffect(() => {
         scrollToBottom();
@@ -27,10 +30,27 @@ export default function MessagesPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const loadConversations = async () => {
+    const loadConversations = async (targetUserId = null) => {
         try {
             const res = await messageAPI.getConversations();
-            setConversations(res.data.data);
+            const convos = res.data.data;
+            setConversations(convos);
+
+            // If we have a target userId from query param, try to find and open it
+            if (targetUserId) {
+                const partnerId = parseInt(targetUserId);
+                const existingConvo = convos.find(c => c.user_id === partnerId);
+                if (existingConvo) {
+                    loadMessages(
+                        existingConvo.user_id,
+                        `${existingConvo.first_name} ${existingConvo.last_name}`,
+                        existingConvo.role
+                    );
+                } else {
+                    // Start a temporary conversation UI for new partner
+                    loadMessages(partnerId, `User #${partnerId}`, '');
+                }
+            }
         } catch (err) {
             console.error('Failed to load conversations:', err);
         } finally {

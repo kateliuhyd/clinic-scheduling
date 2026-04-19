@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { appointmentAPI, medicalRecordAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Search, User, Calendar, FileText, Plus, X } from 'lucide-react';
@@ -44,8 +45,13 @@ export default function PatientHistoryPage() {
 
     const handleSearch = (e) => {
         e.preventDefault();
-        if (searchPatientId.trim()) {
-            loadPatientHistory(searchPatientId.trim());
+        const pid = searchPatientId.trim();
+        if (pid) {
+            if (parseInt(pid) === user.userId) {
+                alert("You are searching for your own User ID. This page is intended for viewing your patient's records. Please enter a patient's User ID.");
+                return;
+            }
+            loadPatientHistory(pid);
         }
     };
 
@@ -99,7 +105,7 @@ export default function PatientHistoryPage() {
                             <input
                                 className="form-input"
                                 type="text"
-                                placeholder="Enter patient user ID (e.g., 5)"
+                                placeholder="Enter patient's User ID to view their history..."
                                 value={searchPatientId}
                                 onChange={e => setSearchPatientId(e.target.value)}
                             />
@@ -117,10 +123,15 @@ export default function PatientHistoryPage() {
 
             {!loading && searchedPatient && (
                 <>
-                    <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 20 }}>
-                        <User size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                        {searchedPatient.name}
-                    </h2>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                        <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 0 }}>
+                            <User size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+                            {searchedPatient.name}
+                        </h2>
+                        <Link to={`/messages?userId=${searchedPatient.id}`} className="btn btn-outline btn-sm">
+                            <MessageSquare size={14} style={{ marginRight: 6 }} /> Message Patient
+                        </Link>
+                    </div>
 
                     {/* Appointments Section */}
                     <div className="card" style={{ marginBottom: 24 }}>

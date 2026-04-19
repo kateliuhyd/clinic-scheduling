@@ -81,9 +81,14 @@ export default function DoctorsPage() {
               </div>
               {doc.bio && <p className="bio">{doc.bio}</p>}
               {isAuthenticated && (
-                <Link to={`/book?doctorId=${doc.doctorId}`} className="btn btn-outline btn-sm">
-                  <Calendar size={14} /> View Availability
-                </Link>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <Link to={`/book?doctorId=${doc.doctorId}`} className="btn btn-primary btn-sm" style={{ flex: 1 }}>
+                    <Calendar size={14} /> Book Appointment
+                  </Link>
+                  <Link to={`/messages?userId=${doc.userId}`} className="btn btn-outline btn-sm">
+                    Message
+                  </Link>
+                </div>
               )}
             </div>
           ))}

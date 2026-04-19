@@ -95,8 +95,13 @@ export default function DoctorSchedulePage() {
   const formatTime = (dt) => new Date(dt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   const formatDate = (dt) => new Date(dt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-  // Group by date
-  const groupedSlots = slots.reduce((acc, slot) => {
+  const today = new Date().toISOString().split('T')[0];
+
+  // Filter out expired slots (past end time), then group by date
+  const now = new Date();
+  const activeSlots = slots.filter(slot => new Date(slot.endTime) > now);
+
+  const groupedSlots = activeSlots.reduce((acc, slot) => {
     const date = new Date(slot.startTime).toLocaleDateString('en-US', {
       weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
     });
@@ -134,6 +139,7 @@ export default function DoctorSchedulePage() {
                   <label className="form-label">Start Time</label>
                   <input className="form-input" type="datetime-local"
                     value={singleSlot.startTime}
+                    min={new Date().toISOString().slice(0, 16)}
                     onChange={e => setSingleSlot({ ...singleSlot, startTime: e.target.value })}
                     required />
                 </div>
@@ -141,6 +147,7 @@ export default function DoctorSchedulePage() {
                   <label className="form-label">End Time</label>
                   <input className="form-input" type="datetime-local"
                     value={singleSlot.endTime}
+                    min={new Date().toISOString().slice(0, 16)}
                     onChange={e => setSingleSlot({ ...singleSlot, endTime: e.target.value })}
                     required />
                 </div>
@@ -163,6 +170,7 @@ export default function DoctorSchedulePage() {
                   <label className="form-label">Start Date</label>
                   <input className="form-input" type="date"
                     value={batchForm.startDate}
+                    min={today}
                     onChange={e => setBatchForm({ ...batchForm, startDate: e.target.value })}
                     required />
                 </div>
@@ -170,6 +178,7 @@ export default function DoctorSchedulePage() {
                   <label className="form-label">End Date</label>
                   <input className="form-input" type="date"
                     value={batchForm.endDate}
+                    min={today}
                     onChange={e => setBatchForm({ ...batchForm, endDate: e.target.value })}
                     required />
                 </div>
@@ -217,16 +226,18 @@ export default function DoctorSchedulePage() {
           <h3>My Schedule</h3>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <input className="form-input" type="date" value={startDate}
+              min={today}
               onChange={e => setStartDate(e.target.value)} style={{ width: 'auto' }} />
             <span>to</span>
             <input className="form-input" type="date" value={endDate}
+              min={today}
               onChange={e => setEndDate(e.target.value)} style={{ width: 'auto' }} />
           </div>
         </div>
         <div className="card-body">
           {loading ? (
             <div className="loading"><div className="spinner" /> Loading schedule...</div>
-          ) : slots.length === 0 ? (
+          ) : activeSlots.length === 0 ? (
             <div className="empty-state">
               <Calendar size={48} />
               <h3>No slots in this range</h3>
