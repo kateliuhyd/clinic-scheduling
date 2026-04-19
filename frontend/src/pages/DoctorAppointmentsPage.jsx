@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { appointmentAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Calendar, User, Clock, CheckCircle, X, Stethoscope } from 'lucide-react';
@@ -108,7 +109,10 @@ export default function DoctorAppointmentsPage() {
                   </span>
                 </div>
               </div>
-              <div className="appt-actions">
+              <div className="appt-actions" style={{ display: 'flex', gap: 8 }}>
+                <Link to={`/messages?userId=${appt.patientId}`} className="btn btn-outline btn-sm">
+                  Message Patient
+                </Link>
                 {appt.status === 'BOOKED' && (
                   <>
                     <button className="btn btn-success btn-sm"
