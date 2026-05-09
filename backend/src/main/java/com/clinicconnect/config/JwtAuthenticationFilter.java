@@ -29,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
+        String requestURI = request.getRequestURI();
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
@@ -45,11 +46,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role)));
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                    logger.debug("Authenticated user: {} ({})", username, role);
+                    logger.info("JWT AUTH OK: user={}, userId={}, role={}, uri={}", username, userId, role, requestURI);
+                } else {
+                    logger.warn("JWT AUTH FAIL: token invalid for uri={}", requestURI);
                 }
             } catch (Exception e) {
-                logger.warn("JWT validation failed: {}", e.getMessage());
+                logger.warn("JWT AUTH ERROR: {} for uri={}", e.getMessage(), requestURI);
             }
+        } else {
+            logger.debug("JWT AUTH SKIP: no Bearer token for uri={}", requestURI);
         }
 
         filterChain.doFilter(request, response);
