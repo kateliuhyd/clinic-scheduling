@@ -31,11 +31,11 @@ public class AppointmentController {
     }
 
     /**
-     * POST /api/appointments/book
+     * POST /api/appointments
      * Book an appointment (Patient).
      * Uses pessimistic locking to prevent double-booking.
      */
-    @PostMapping("/book")
+    @PostMapping
     public ResponseEntity<ApiResponse<Appointment>> bookAppointment(
             @Valid @RequestBody BookingRequest request,
             Authentication auth) {
@@ -47,10 +47,10 @@ public class AppointmentController {
     }
 
     /**
-     * PUT /api/appointments/{id}/cancel
+     * POST /api/appointments/{id}/cancel
      * Cancel an appointment.
      */
-    @PutMapping("/{id}/cancel")
+    @PostMapping("/{id}/cancel")
     public ResponseEntity<ApiResponse<Appointment>> cancelAppointment(
             @PathVariable Long id,
             Authentication auth) {

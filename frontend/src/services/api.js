@@ -70,8 +70,8 @@ export const slotAPI = {
 
 // Appointments
 export const appointmentAPI = {
-  book: (data) => api.post('/appointments/book', data),
-  cancel: (id) => api.put(`/appointments/${id}/cancel`),
+  book: (data) => api.post('/appointments', data),
+  cancel: (id) => api.post(`/appointments/${id}/cancel`),
   complete: (id) => api.put(`/appointments/${id}/complete`),
   getMy: (status) => api.get('/appointments/my', { params: status ? { status } : {} }),
   getMyDoctor: (status) => api.get('/appointments/my-doctor', { params: status ? { status } : {} }),

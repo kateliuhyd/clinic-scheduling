@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { messageAPI } from '../services/api';
+import { messageAPI, doctorAPI, appointmentAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { MessageSquare, Send, User } from 'lucide-react';
+import { MessageSquare, Send, User, Search } from 'lucide-react';
 
 export default function MessagesPage() {
     const { user } = useAuth();
@@ -12,8 +12,10 @@ export default function MessagesPage() {
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
-    const [newConvoId, setNewConvoId] = useState('');
     const [showNewConvo, setShowNewConvo] = useState(false);
+    const [contacts, setContacts] = useState([]);
+    const [contactsLoading, setContactsLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     const messagesEndRef = useRef(null);
     const [searchParams] = useSearchParams();
     const queryUserId = searchParams.get('userId');
@@ -58,6 +60,59 @@ export default function MessagesPage() {
         }
     };
 
+    /**
+     * Load available contacts based on the user's role:
+     * - Patient: show all doctors
+     * - Doctor: show patients from their appointments
+     */
+    const loadContacts = async () => {
+        setContactsLoading(true);
+        try {
+            if (user.role === 'PATIENT') {
+                // Patients can message any doctor
+                const res = await doctorAPI.getAll();
+                const doctors = res.data.data || res.data;
+                const contactList = (Array.isArray(doctors) ? doctors : []).map(doc => ({
+                    userId: doc.userId,
+                    name: `Dr. ${doc.firstName} ${doc.lastName}`,
+                    detail: doc.specialty || doc.departmentName || '',
+                }));
+                setContacts(contactList);
+            } else if (user.role === 'DOCTOR') {
+                // Doctors can message patients who have/had appointments with them
+                const res = await appointmentAPI.getMyDoctor();
+                const appointments = res.data.data || res.data;
+                // Deduplicate patients by userId
+                const seen = new Set();
+                const contactList = [];
+                (Array.isArray(appointments) ? appointments : []).forEach(appt => {
+                    const patientId = appt.patientId;
+                    if (patientId && !seen.has(patientId)) {
+                        seen.add(patientId);
+                        contactList.push({
+                            userId: patientId,
+                            name: appt.patientName || `Patient #${patientId}`,
+                            detail: appt.serviceName || '',
+                        });
+                    }
+                });
+                setContacts(contactList);
+            }
+        } catch (err) {
+            console.error('Failed to load contacts:', err);
+        } finally {
+            setContactsLoading(false);
+        }
+    };
+
+    const handleShowNewConvo = () => {
+        if (!showNewConvo) {
+            loadContacts();
+        }
+        setShowNewConvo(!showNewConvo);
+        setSearchTerm('');
+    };
+
     const loadMessages = async (partnerId, partnerName, partnerRole) => {
         setSelectedPartner({ id: partnerId, name: partnerName, role: partnerRole });
         try {
@@ -92,14 +147,20 @@ export default function MessagesPage() {
         }
     };
 
-    const handleStartNewConversation = async (e) => {
-        e.preventDefault();
-        if (!newConvoId.trim()) return;
-        const partnerId = parseInt(newConvoId.trim());
+    const handleSelectContact = (contact) => {
         setShowNewConvo(false);
-        setNewConvoId('');
-        loadMessages(partnerId, `User #${partnerId}`, '');
+        setSearchTerm('');
+        loadMessages(contact.userId, contact.name, user.role === 'PATIENT' ? 'DOCTOR' : 'PATIENT');
     };
+
+    const filteredContacts = contacts.filter(c =>
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.detail.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Filter out contacts that already have conversations
+    const existingPartnerIds = new Set(conversations.map(c => c.user_id));
+    const newContacts = filteredContacts.filter(c => !existingPartnerIds.has(c.userId));
 
     const formatTime = (dt) => {
         const d = new Date(dt);
@@ -123,26 +184,115 @@ export default function MessagesPage() {
                     <h1>Messages</h1>
                     <p>Communicate securely with your {user.role === 'DOCTOR' ? 'patients' : 'healthcare providers'}</p>
                 </div>
-                <button className="btn btn-primary btn-sm" onClick={() => setShowNewConvo(!showNewConvo)}>
+                <button className="btn btn-primary btn-sm" onClick={handleShowNewConvo}>
                     <MessageSquare size={14} /> New Conversation
                 </button>
             </div>
 
             {showNewConvo && (
                 <div className="card" style={{ marginBottom: 16 }}>
+                    <div className="card-header">
+                        <h3>Select a {user.role === 'PATIENT' ? 'Doctor' : 'Patient'} to message</h3>
+                    </div>
                     <div className="card-body">
-                        <form onSubmit={handleStartNewConversation} style={{ display: 'flex', gap: 12 }}>
+                        <div style={{ position: 'relative', marginBottom: 12 }}>
+                            <Search size={16} style={{
+                                position: 'absolute', left: 12, top: '50%',
+                                transform: 'translateY(-50%)', color: 'var(--gray-400)'
+                            }} />
                             <input
                                 className="form-input"
                                 type="text"
-                                placeholder="Enter user ID to message..."
-                                value={newConvoId}
-                                onChange={e => setNewConvoId(e.target.value)}
-                                style={{ flex: 1 }}
+                                placeholder={`Search ${user.role === 'PATIENT' ? 'doctors' : 'patients'}...`}
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                style={{ paddingLeft: 36 }}
                             />
-                            <button className="btn btn-primary" type="submit">Start</button>
-                            <button className="btn btn-secondary" type="button" onClick={() => setShowNewConvo(false)}>Cancel</button>
-                        </form>
+                        </div>
+
+                        {contactsLoading ? (
+                            <div className="loading"><div className="spinner" /> Loading contacts...</div>
+                        ) : newContacts.length === 0 && filteredContacts.length === 0 ? (
+                            <div style={{ padding: 16, textAlign: 'center', color: 'var(--gray-500)', fontSize: 14 }}>
+                                {user.role === 'DOCTOR'
+                                    ? 'No patients found. Patients with appointments will appear here.'
+                                    : 'No doctors found.'}
+                            </div>
+                        ) : (
+                            <div style={{ maxHeight: 240, overflowY: 'auto' }}>
+                                {/* Show contacts that already have conversations */}
+                                {filteredContacts.filter(c => existingPartnerIds.has(c.userId)).length > 0 && (
+                                    <>
+                                        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--gray-500)',
+                                            textTransform: 'uppercase', padding: '8px 12px', letterSpacing: '0.05em' }}>
+                                            Existing Conversations
+                                        </div>
+                                        {filteredContacts.filter(c => existingPartnerIds.has(c.userId)).map(contact => (
+                                            <div
+                                                key={contact.userId}
+                                                onClick={() => handleSelectContact(contact)}
+                                                style={{
+                                                    padding: '10px 12px', cursor: 'pointer',
+                                                    display: 'flex', alignItems: 'center', gap: 12,
+                                                    borderRadius: 8, transition: 'background 0.15s',
+                                                }}
+                                                onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'}
+                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                <div className="conversation-avatar">
+                                                    {contact.name.split(' ').filter(w => w).map(w => w.charAt(0)).join('').slice(0, 2)}
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontWeight: 500, fontSize: 14 }}>{contact.name}</div>
+                                                    {contact.detail && (
+                                                        <div style={{ fontSize: 12, color: 'var(--gray-500)' }}>{contact.detail}</div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
+
+                                {/* Show new contacts */}
+                                {newContacts.length > 0 && (
+                                    <>
+                                        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--gray-500)',
+                                            textTransform: 'uppercase', padding: '8px 12px', letterSpacing: '0.05em',
+                                            marginTop: filteredContacts.filter(c => existingPartnerIds.has(c.userId)).length > 0 ? 8 : 0
+                                        }}>
+                                            {user.role === 'PATIENT' ? 'Available Doctors' : 'Your Patients'}
+                                        </div>
+                                        {newContacts.map(contact => (
+                                            <div
+                                                key={contact.userId}
+                                                onClick={() => handleSelectContact(contact)}
+                                                style={{
+                                                    padding: '10px 12px', cursor: 'pointer',
+                                                    display: 'flex', alignItems: 'center', gap: 12,
+                                                    borderRadius: 8, transition: 'background 0.15s',
+                                                }}
+                                                onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'}
+                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                <div className="conversation-avatar">
+                                                    {contact.name.split(' ').filter(w => w).map(w => w.charAt(0)).join('').slice(0, 2)}
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontWeight: 500, fontSize: 14 }}>{contact.name}</div>
+                                                    {contact.detail && (
+                                                        <div style={{ fontSize: 12, color: 'var(--gray-500)' }}>{contact.detail}</div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
+                            </div>
+                        )}
+
+                        <div style={{ marginTop: 12, textAlign: 'right' }}>
+                            <button className="btn btn-secondary btn-sm" onClick={() => setShowNewConvo(false)}>Cancel</button>
+                        </div>
                     </div>
                 </div>
             )}

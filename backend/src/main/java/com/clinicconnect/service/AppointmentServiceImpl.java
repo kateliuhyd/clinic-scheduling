@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -102,14 +104,18 @@ public class AppointmentServiceImpl implements AppointmentService {
         logger.info("Appointment {} booked successfully for patient {} at slot {}",
                 appointment.getAppointmentId(), patientId, slot.getSlotId());
 
-        // Step 6: Send notification via mock external service (best-effort, outside
-        // critical path)
-        try {
-            notificationClient.sendBookingConfirmation(appointment.getAppointmentId(), patientId);
-        } catch (Exception e) {
-            logger.error("Failed to send booking notification for appointment {}: {}",
-                    appointment.getAppointmentId(), e.getMessage());
-        }
+        // Step 6: Send notification via mock external service (AFTER COMMIT)
+        final Long apptId = appointment.getAppointmentId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    appointmentRepository.findById(apptId).ifPresent(notificationClient::sendBookingConfirmation);
+                } catch (Exception e) {
+                    logger.error("Failed to send booking notification for appointment {}: {}", apptId, e.getMessage());
+                }
+            }
+        });
 
         return appointmentRepository.findById(appointment.getAppointmentId())
                 .orElse(appointment);
@@ -148,12 +154,18 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         logger.info("Appointment {} canceled, slot {} released", appointmentId, appointment.getSlotId());
 
-        // Step 3: Send cancellation notification
-        try {
-            notificationClient.sendCancellationNotice(appointmentId, appointment.getPatientId());
-        } catch (Exception e) {
-            logger.error("Failed to send cancellation notification: {}", e.getMessage());
-        }
+        // Step 3: Send cancellation notification (AFTER COMMIT)
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    appointmentRepository.findById(appointmentId)
+                            .ifPresent(notificationClient::sendCancellationNotice);
+                } catch (Exception e) {
+                    logger.error("Failed to send cancellation notification: {}", e.getMessage());
+                }
+            }
+        });
 
         return appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found after cancel"));

@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/mock/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/health").permitAll()
+                .requestMatchers("/error").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/doctors/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/services/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/departments/**").permitAll()

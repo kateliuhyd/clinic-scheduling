@@ -51,6 +51,10 @@ public class SlotController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             Authentication auth) {
+        if (auth == null || auth.getPrincipal() == null) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error("Not authenticated. Please log in again."));
+        }
         Long userId = (Long) auth.getPrincipal();
         List<AvailabilitySlot> slots = slotService.getDoctorSchedule(userId, startDate, endDate);
         return ResponseEntity.ok(ApiResponse.success(slots));
