@@ -1,6 +1,5 @@
 package com.clinicconnect.controller;
 
-import com.clinicconnect.dto.ApiResponse;
 import com.clinicconnect.repository.NotificationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,41 +15,54 @@ import java.util.Map;
  * notifications_log.
  */
 @RestController
-@RequestMapping("/api/mock/notifications")
+@RequestMapping("/mock/notify")
 public class MockNotificationController {
 
-        private static final Logger logger = LoggerFactory.getLogger(MockNotificationController.class);
+    private static final Logger logger = LoggerFactory.getLogger(MockNotificationController.class);
 
-        private final NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
 
-        public MockNotificationController(NotificationRepository notificationRepository) {
-                this.notificationRepository = notificationRepository;
+    public MockNotificationController(NotificationRepository notificationRepository) {
+        this.notificationRepository = notificationRepository;
+    }
+
+    @PostMapping("/appointment-event")
+    public ResponseEntity<Map<String, Object>> handleAppointmentEvent(
+            @RequestBody Map<String, Object> payload) {
+        logger.info("=== MOCK NOTIFICATION SERVICE (Coarse-Grained Event) ===");
+        logger.info("Event Type: {}", payload.get("eventType"));
+        logger.info("Appointment ID: {}", payload.get("appointmentId"));
+        logger.info("Patient ID: {}", payload.get("patientId"));
+        logger.info("Doctor ID: {}", payload.get("doctorId"));
+        logger.info("Service ID: {}", payload.get("serviceId"));
+        logger.info("Start Time: {}", payload.get("startTime"));
+        logger.info("End Time: {}", payload.get("endTime"));
+        logger.info("Patient Email: {}", payload.get("patientEmail"));
+        logger.info("=================================");
+
+        // Persist notification for audit
+        try {
+            Long apptId = payload.get("appointmentId") != null
+                    ? Long.valueOf(payload.get("appointmentId").toString())
+                    : null;
+            Long recipientId = payload.get("patientId") != null
+                    ? Long.valueOf(payload.get("patientId").toString())
+                    : null;
+            String eventType = String.valueOf(payload.get("eventType"));
+            String patientEmail = String.valueOf(payload.get("patientEmail"));
+            String message = "Simulated " + eventType + " for " + patientEmail + " at " + payload.get("startTime");
+
+            notificationRepository.save(apptId, eventType, recipientId, message, "ACCEPTED");
+        } catch (Exception e) {
+            logger.error("Error persisting mock notification: {}", e.getMessage());
         }
 
-        @PostMapping("/send")
-        public ResponseEntity<ApiResponse<Map<String, String>>> sendNotification(
-                        @RequestBody Map<String, Object> payload) {
-                logger.info("=== MOCK NOTIFICATION SERVICE ===");
-                logger.info("Received notification request: type={}, appointmentId={}, recipientId={}",
-                                payload.get("type"), payload.get("appointmentId"), payload.get("recipientId"));
-                logger.info("Message: {}", payload.get("message"));
-                logger.info("=================================");
+        Map<String, Object> response = new java.util.HashMap<>();
+        long now = System.currentTimeMillis();
+        response.put("status", "ACCEPTED");
+        response.put("messageId", "mock-" + now);
+        response.put("timestamp", now);
 
-                // Persist notification to database
-                Long appointmentId = payload.get("appointmentId") != null
-                                ? Long.valueOf(payload.get("appointmentId").toString())
-                                : null;
-                Long recipientId = payload.get("recipientId") != null
-                                ? Long.valueOf(payload.get("recipientId").toString())
-                                : null;
-                String type = payload.get("type") != null ? payload.get("type").toString() : "UNKNOWN";
-                String message = payload.get("message") != null ? payload.get("message").toString() : "";
-
-                notificationRepository.save(appointmentId, type, recipientId, message, "DELIVERED");
-
-                Map<String, String> response = Map.of(
-                                "status", "DELIVERED",
-                                "notificationId", "MOCK-" + System.currentTimeMillis());
-                return ResponseEntity.ok(ApiResponse.success("Notification sent", response));
-        }
+        return ResponseEntity.ok(response);
+    }
 }
